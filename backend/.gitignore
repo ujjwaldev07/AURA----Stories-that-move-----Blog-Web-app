@@ -3,4 +3,4 @@
 
 # Environment variables
  .env
- .env.example
+ backend/.env
