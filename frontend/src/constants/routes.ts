@@ -1,0 +1,16 @@
+export const ROUTES = {
+  home: '/',
+  landing: '/',
+  login: '/login',
+  register: '/register',
+  forgotPassword: '/forgot-password',
+  feed: '/feed',
+  explore: '/explore',
+  post: (id: string) => `/post/${id}`,
+  profile: (id: string) => `/profile/${id}`,
+  editProfile: '/settings/profile',
+  search: '/search',
+  notFound: '/404',
+  serverError: '/500',
+  offline: '/offline',
+} as const

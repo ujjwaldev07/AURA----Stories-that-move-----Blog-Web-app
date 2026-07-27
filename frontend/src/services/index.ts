@@ -1,0 +1,6 @@
+export { authService } from './authService'
+export { bookmarkService } from './bookmarkService'
+export { postService } from './postService'
+export { commentService } from './commentService'
+export { userService } from './userService'
+export { uploadService } from './uploadService'
