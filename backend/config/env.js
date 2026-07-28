@@ -24,13 +24,23 @@ function validateEnv({ logger = console } = {}) {
     logger.warn(`[startup] JWT_EXPIRE or JWT_EXPIRES_IN not set, defaulting to '1d'`);
   }
 
-  logger.info(`[startup] Loaded .env: ${envPath}`);
-  logger.info(`[startup] dotenv: ${loaded ? 'Loaded' : 'Not loaded'}`);
+logger.info(`[startup] .env path: ${envPath}`);
+logger.info(
+  `[startup] dotenv: ${
+    loaded
+      ? "Loaded from .env"
+      : "Using system environment variables"
+  }`
+);
   logger.info(`[startup] NODE_ENV=${process.env.NODE_ENV || 'undefined'}`);
   logger.info(`[startup] GOOGLE_CLIENT_ID=${hasValue('GOOGLE_CLIENT_ID') ? 'Loaded' : 'Missing'}`);
   logger.info(`[startup] GOOGLE_CLIENT_SECRET=${hasValue('GOOGLE_CLIENT_SECRET') ? 'Loaded' : 'Missing'}`);
 
-  if (!loaded) throw new Error(`Unable to load ${envPath}. Check that backend/.env exists and is readable.`);
+  if (!loaded) {
+  logger.warn(
+    `[startup] .env file not found. Using environment variables provided by the hosting platform.`
+  );
+}
   if (missing.length || (googleOAuthRequired() && missingGoogle.length)) {
     const allMissing = [...missing, ...(googleOAuthRequired() ? missingGoogle : [])];
     const error = new Error(`Missing required environment variables: ${allMissing.join(', ')}. Check ${envPath} and restart the backend.`);
