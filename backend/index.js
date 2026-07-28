@@ -124,6 +124,13 @@ async function start() {
   app.listen(PORT, () => console.info(`[startup] Aura API listening on http://localhost:${PORT}`));
 }
 
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Aura Blog Backend API is running 🚀",
+  });
+});
+
 if (require.main === module) {
   start().catch((error) => {
     console.error('[startup] API failed to start:', error.message);
