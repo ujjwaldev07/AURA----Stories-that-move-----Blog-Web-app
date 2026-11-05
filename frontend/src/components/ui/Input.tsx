@@ -42,13 +42,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   ) => {
     const [show, setShow] = useState(false)
     const [focused, setFocused] = useState(false)
-    const [internalValue, setInternalValue] = useState(
-      typeof defaultValue === 'string' ? defaultValue : typeof value === 'string' ? value : '',
-    )
     const reactId = useId()
     const isPassword = type === 'password'
     const inputId = id || props.name || reactId
-    const currentValue = typeof value === 'string' ? value : internalValue
+    const currentValue = typeof value === 'string' ? value : (typeof defaultValue === 'string' ? defaultValue : '')
     const hasValue = currentValue.length > 0
     const floated = floating && (focused || hasValue)
 
@@ -107,7 +104,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               onBlur?.(e)
             }}
             onChange={(e) => {
-              setInternalValue(e.target.value)
               onChange?.(e)
             }}
           />

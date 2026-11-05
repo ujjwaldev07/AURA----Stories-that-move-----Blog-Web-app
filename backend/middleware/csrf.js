@@ -27,21 +27,33 @@ function issueCsrfToken(req, res, next) {
 
 function csrfProtection(req, _res, next) {
   if (SAFE_METHODS.has(req.method)) return next();
+
   const cookieToken = req.cookies?.[COOKIE_NAME];
-  // Try both lowercase and mixed-case header names
   const headerToken = req.get(HEADER_NAME) || req.get('X-CSRF-Token');
+
   if (!cookieToken || !headerToken || cookieToken.length !== headerToken.length) {
     const error = new Error('Invalid CSRF token. Refresh the page and try again.');
     error.statusCode = 403;
     return next(error);
   }
-  const valid = crypto.timingSafeEqual(Buffer.from(cookieToken), Buffer.from(headerToken));
-  if (!valid) {
+
+  try {
+    const valid = crypto.timingSafeEqual(
+      Buffer.from(cookieToken),
+      Buffer.from(headerToken)
+    );
+    if (!valid) {
+      const error = new Error('Invalid CSRF token. Refresh the page and try again.');
+      error.statusCode = 403;
+      return next(error);
+    }
+  } catch {
     const error = new Error('Invalid CSRF token. Refresh the page and try again.');
     error.statusCode = 403;
     return next(error);
   }
-  return next();
+
+  next();
 }
 
 module.exports = { issueCsrfToken, csrfProtection };

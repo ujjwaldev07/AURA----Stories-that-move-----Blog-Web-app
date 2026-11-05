@@ -21,27 +21,20 @@ export interface UpdatePostPayload extends Partial<CreatePostPayload> {
   slug?: string
 }
 
-function normalizePosts(raw: unknown): Post[] {
-  if (!raw) return []
-  if (Array.isArray(raw)) return raw as Post[]
-  if (typeof raw === 'object' && raw !== null) {
-    const obj = raw as Record<string, unknown>
-    if (Array.isArray(obj.post)) return obj.post as Post[]
-    if (Array.isArray(obj.posts)) return obj.posts as Post[]
-    if (Array.isArray(obj.savedPost)) return obj.savedPost as Post[]
-    if (obj.savedPost && typeof obj.savedPost === 'object') {
-      return [obj.savedPost as Post]
-    }
-  }
-  return []
+export interface PaginatedResult {
+  posts: Post[]
+  meta: { page: number; limit: number; total: number; hasMore: boolean }
 }
 
 export const postService = {
-  async getPosts(search?: string) {
-    const { data } = await api.get<{ posts?: Post[]; post?: Post[] | Post | null }>(API_ENDPOINTS.posts.list, {
-      params: search ? { search } : undefined,
-    })
-    return normalizePosts(data.posts ?? data.post ?? data)
+  async getPosts(search?: string, page = 1, limit = 20) {
+    const params: Record<string, string | number> = { page, limit }
+    if (search) params.search = search
+    const { data } = await api.get<{ posts: Post[]; meta: { page: number; limit: number; total: number; hasMore: boolean } }>(
+      API_ENDPOINTS.posts.list,
+      { params },
+    )
+    return { posts: data.posts ?? [], meta: data.meta ?? { page, limit, total: 0, hasMore: false } }
   },
 
   async getPost(id: string) {
@@ -55,8 +48,8 @@ export const postService = {
       return data.posts ?? []
     } catch {
       // Fallback: filter client-side if backend user route fails
-      const posts = await this.getPosts()
-      return posts.filter((p) => {
+      const response = await this.getPosts()
+      return response.posts.filter((p) => {
         const authorId = typeof p.author === 'string' ? p.author : p.author?._id
         return authorId === userId
       })

@@ -39,7 +39,7 @@ export function SearchModal() {
   })
 
   const trendingPosts = useMemo(() => {
-    const posts = postsQuery.data || []
+    const posts = postsQuery.data?.posts || []
     return [...posts]
       .sort((a, b) => (b.likes?.length || 0) - (a.likes?.length || 0))
       .slice(0, 5)
@@ -168,7 +168,7 @@ export function SearchModal() {
             <div>
               <p className="mb-2 text-xs font-semibold tracking-wide text-muted uppercase">Stories</p>
               <div className="space-y-1">
-                {(postsQuery.data || []).slice(0, 8).map((p) => (
+                {(postsQuery.data?.posts || []).slice(0, 8).map((p) => (
                   <Link
                     key={p._id}
                     to={ROUTES.post(p._id)}
@@ -182,7 +182,7 @@ export function SearchModal() {
                     <p className="text-xs text-muted">{truncate(p.content, 90)}</p>
                   </Link>
                 ))}
-                {!postsQuery.data?.length ? (
+{!postsQuery.data?.posts?.length ? (
                   <p className="px-3 py-2 text-sm text-muted">No stories found</p>
                 ) : null}
               </div>

@@ -86,7 +86,7 @@ export function GoogleSignInButton({ onCredential }: GoogleSignInButtonProps) {
   return (
     <div className="mt-5 border-t border-border pt-5">
       <p className="mb-3 text-center text-xs text-muted">or continue with</p>
-      <div className={loading ? 'pointer-events-none opacity-60' : ''} ref={container} />
+      <div className={`google-signin-container ${loading ? 'pointer-events-none opacity-60' : ''}`} ref={container} />
       {loadError ? <p className="mt-2 text-center text-xs text-danger" role="alert">{loadError}</p> : null}
     </div>
   )

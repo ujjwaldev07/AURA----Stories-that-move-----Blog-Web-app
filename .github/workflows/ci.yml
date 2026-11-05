@@ -1,0 +1,69 @@
+name: Aura Blog CI
+
+on:
+  push:
+    branches: [main, master]
+
+  pull_request:
+    branches: [main, master]
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aura-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      # Backend
+      - name: Install Backend Dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Backend Lint
+        working-directory: backend
+        run: npm run lint --if-present
+
+      - name: Backend Tests
+        working-directory: backend
+        run: npm test --if-present
+
+      # Frontend
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Frontend Lint
+        working-directory: frontend
+        run: npm run lint --if-present
+
+      - name: Frontend Tests
+        working-directory: frontend
+        run: npm test --if-present
+
+      - name: Frontend Production Build
+        working-directory: frontend
+        run: npm run build
+
+      - name: CI Pipeline Completed
+        run: echo "Aura Blog CI completed successfully!"

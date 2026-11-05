@@ -189,6 +189,22 @@ textarea {
   animation: pulse-glow 3.5s ease-in-out infinite;
 }
 
+/* Google Sign-In button: ensure symmetric pill shape */
+.google-signin-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.google-signin-container .g_id_signin,
+.google-signin-container .g_id_signin_button,
+.google-signin-container > div[role="button"],
+.google-signin-container iframe,
+.google-signin-container > div {
+  border-radius: 9999px !important;
+  overflow: hidden !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

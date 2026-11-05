@@ -14,7 +14,7 @@ function googleOAuthRequired() {
 }
 
 function validateEnv({ logger = console } = {}) {
-  const required = ['PORT', 'MONGODB_URI', 'JWT_SECRET', 'COOKIE_SECRET', 'SESSION_SECRET', 'CLIENT_URL', 'NODE_ENV'];
+const required = ['PORT', 'MONGODB_URI', 'JWT_SECRET', 'COOKIE_SECRET', 'CLIENT_URL', 'NODE_ENV'];
   const missing = required.filter((name) => !hasValue(name));
   const missingGoogle = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'].filter((name) => !hasValue(name));
 

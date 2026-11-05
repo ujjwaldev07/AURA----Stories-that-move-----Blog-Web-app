@@ -18,7 +18,7 @@ export default function FeedPage() {
     queryFn: () => postService.getPosts(),
   })
 
-  const posts = stats.data || []
+  const posts = stats.data?.posts || []
   const likes = posts.reduce((acc, p) => acc + (p.likes?.length || 0), 0)
 
   return (

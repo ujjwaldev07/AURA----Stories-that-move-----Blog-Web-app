@@ -36,7 +36,9 @@ export function resolveImageUrl(path?: string | null): string {
     return path
   }
   const clean = path.startsWith('/images/') ? path : path.startsWith('/') ? path : `/images/${path}`
-  return `${env.apiBaseUrl}${clean}`
+  // Strip trailing slash from base URL to avoid double-slash (e.g. "//images/...")
+  const base = env.apiBaseUrl.replace(/\/+$/, '')
+  return `${base}${clean}`
 }
 
 export function formatRelativeTime(date?: string): string {

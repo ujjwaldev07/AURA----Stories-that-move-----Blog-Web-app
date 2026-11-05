@@ -7,7 +7,8 @@
     "dev": "vite --port 5174 --strictPort",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview --port 5174 --strictPort"
+    "preview": "vite preview --port 5174 --strictPort",
+    "test": "vitest run"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.2",
@@ -26,6 +27,7 @@
     "react-intersection-observer": "^10.1.0",
     "react-router-dom": "^7.18.1",
     "tailwind-merge": "^3.6.0",
+    "vitest": "^5.1.0",
     "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },

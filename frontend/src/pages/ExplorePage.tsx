@@ -14,7 +14,8 @@ export default function ExplorePage() {
   })
 
   const trending = useMemo(() => {
-    return [...(data || [])]
+    const allPosts = data?.posts || []
+    return [...allPosts]
       .sort((a, b) => (b.likes?.length || 0) + (b.views || 0) - ((a.likes?.length || 0) + (a.views || 0)))
       .slice(0, 20)
   }, [data])

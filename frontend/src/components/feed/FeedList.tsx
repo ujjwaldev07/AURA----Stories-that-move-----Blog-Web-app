@@ -22,18 +22,15 @@ export function FeedList({ search }: FeedListProps) {
 
   const query = useInfiniteQuery({
     queryKey: queryKeys.posts.list(search),
-    queryFn: async ({ pageParam = 0 }) => {
-      const posts = await postService.getPosts(search)
-      const start = pageParam * APP_CONFIG.feedPageSize
-      const slice = posts.slice(start, start + APP_CONFIG.feedPageSize)
+    queryFn: async ({ pageParam = 1 }) => {
+      const result = await postService.getPosts(search, pageParam, APP_CONFIG.feedPageSize)
       return {
-        items: slice,
-        nextPage:
-          start + APP_CONFIG.feedPageSize < posts.length ? pageParam + 1 : undefined,
-        all: posts,
+        items: result.posts,
+        nextPage: result.meta.hasMore ? pageParam + 1 : undefined,
+        total: result.meta.total,
       }
     },
-    initialPageParam: 0,
+    initialPageParam: 1,
     getNextPageParam: (last) => last.nextPage,
   })
 
@@ -56,7 +53,7 @@ export function FeedList({ search }: FeedListProps) {
     return (
       <EmptyState
         icon={<Newspaper className="h-7 w-7" />}
-        title="Couldn’t load the feed"
+        title="Couldn't load the feed"
         description="Check your connection and try again."
         actionLabel="Retry"
         onAction={() => void query.refetch()}

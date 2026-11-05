@@ -45,6 +45,7 @@ export default function ProfilePage() {
   const username = user ? emailToUsername(user.email) : 'creator'
   const likes = useMemo(
     () => posts.reduce((a, p) => a + (p.likes?.length || 0), 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [posts],
   )
 

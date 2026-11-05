@@ -100,7 +100,23 @@ const authLimiter = rateLimit({
   message: { message: 'Too many auth attempts. Please wait and try again.' },
 });
 app.use('/api/auth', authLimiter);
-app.use('/api', csrfProtection);
+
+// CSRF protection — skip auth routes that are CSRF-entry points
+// (register, login, google, csrf, refetch) since new/unauthenticated visitors
+// cannot possess a CSRF token yet.
+app.use('/api', (req, res, next) => {
+  const skipPaths = [
+    '/api/auth/register',
+    '/api/auth/login',
+    '/api/auth/google',
+    '/api/auth/csrf',
+    '/api/auth/refetch',
+    '/api/auth/logout',
+    '/api/health',
+  ];
+  if (skipPaths.includes(req.path)) return next();
+  return csrfProtection(req, res, next);
+});
 
 // Health check
 app.get('/api/health', (_req, res) => {
