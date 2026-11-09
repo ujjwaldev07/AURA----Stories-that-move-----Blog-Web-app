@@ -118,6 +118,8 @@ app.use('/api', (req, res, next) => {
   return csrfProtection(req, res, next);
 });
 
+app.use('/api/auth', authRoutes);
+
 // Health check
 app.get('/api/health', (_req, res) => {
   res.status(200).json({ ok: true, service: 'aura-api', time: new Date().toISOString() });
