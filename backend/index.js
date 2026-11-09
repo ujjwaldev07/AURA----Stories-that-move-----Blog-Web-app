@@ -106,13 +106,13 @@ app.use('/api/auth', authLimiter);
 // cannot possess a CSRF token yet.
 app.use('/api', (req, res, next) => {
   const skipPaths = [
-    '/api/auth/register',
-    '/api/auth/login',
-    '/api/auth/google',
-    '/api/auth/csrf',
-    '/api/auth/refetch',
-    '/api/auth/logout',
-    '/api/health',
+    '/auth/register',
+    '/auth/login',
+    '/auth/google',
+    '/auth/csrf',
+    '/auth/refetch',
+    '/auth/logout',
+    '/health',
   ];
   if (skipPaths.includes(req.path)) return next();
   return csrfProtection(req, res, next);
