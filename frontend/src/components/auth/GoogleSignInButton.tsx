@@ -33,6 +33,7 @@ export function GoogleSignInButton({ onCredential }: GoogleSignInButtonProps) {
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState('')
   const clientId = env.googleClientId
+  const hasScriptLoaded = useRef(false)
 
   useEffect(() => {
     onCredentialRef.current = onCredential
@@ -40,6 +41,7 @@ export function GoogleSignInButton({ onCredential }: GoogleSignInButtonProps) {
 
   useEffect(() => {
     if (!clientId || !container.current) return
+
     const render = () => {
       if (!window.google || !container.current) return
       window.google.accounts.id.initialize({
@@ -60,26 +62,44 @@ export function GoogleSignInButton({ onCredential }: GoogleSignInButtonProps) {
       })
       container.current.replaceChildren()
       window.google.accounts.id.renderButton(container.current, {
-        theme: 'outline', size: 'large', text: 'continue_with', shape: 'pill', width: 320,
+        theme: 'outline',
+        size: 'large',
+        text: 'continue_with',
+        shape: 'pill',
+        width: 320,
       })
     }
 
-    const script = document.querySelector<HTMLScriptElement>(`script[src="${GOOGLE_SCRIPT_URL}"]`)
-    if (script) {
-      script.addEventListener('load', render)
+    // Check if script already loaded
+    const existingScript = document.querySelector<HTMLScriptElement>(`script[src="${GOOGLE_SCRIPT_URL}"]`)
+    if (existingScript) {
+      existingScript.addEventListener('load', render)
       render()
-      return () => script.removeEventListener('load', render)
+      return () => existingScript.removeEventListener('load', render)
     }
-    const nextScript = document.createElement('script')
-    nextScript.src = GOOGLE_SCRIPT_URL
-    nextScript.async = true
-    nextScript.onload = render
-    nextScript.onerror = () => {
-      setLoadError('Google sign-in could not be loaded. Please refresh and try again.')
-      toast.error('Google sign-in could not be loaded.')
+
+    // Prevent duplicate script insertion
+    if (!hasScriptLoaded.current) {
+      const nextScript = document.createElement('script')
+      nextScript.src = GOOGLE_SCRIPT_URL
+      nextScript.async = true
+      nextScript.onload = render
+      nextScript.onerror = () => {
+        setLoadError('Google sign-in could not be loaded. Please refresh and try again.')
+        toast.error('Google sign-in could not be loaded.')
+      }
+      document.head.appendChild(nextScript)
+      hasScriptLoaded.current = true
     }
-    document.head.appendChild(nextScript)
-    return () => { nextScript.onload = null }
+
+    return () => {
+      // Cleanup: remove event listener if script was added by us
+      const nextScript = document.querySelector<HTMLScriptElement>(`script[src="${GOOGLE_SCRIPT_URL}"]`)
+      if (nextScript) {
+        nextScript.onload = null
+        document.head.removeChild(nextScript)
+      }
+    }
   }, [clientId])
 
   if (!clientId) return null
