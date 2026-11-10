@@ -58,10 +58,12 @@ api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   }
 
   if (!['get', 'head', 'options'].includes(config.method?.toLowerCase() || 'get')) {
-    const token = csrfToken || await initializeCsrf()
-    config.headers.set('x-csrf-token', token)
-  }
+    const token = csrfToken || getCookie('csrf_token');
 
+    if(token){
+    config.headers['x-csrf-token'] = token
+  }
+  }
   return config
 })
 
@@ -116,3 +118,22 @@ export const apiClient = {
 }
 
 export default api
+function getCookie(arg0: string): string | null {
+  if (typeof document === 'undefined') return null
+
+  const prefix = `${arg0}=`
+  const cookie = document.cookie
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(prefix))
+
+  if (!cookie) return null
+
+  const value = cookie.slice(prefix.length)
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+

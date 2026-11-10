@@ -31,6 +31,20 @@ function csrfProtection(req, _res, next) {
   const cookieToken = req.cookies?.[COOKIE_NAME];
   const headerToken = req.get(HEADER_NAME) || req.get('X-CSRF-Token');
 
+  // temperary case
+  console.info('[CSRF DEBUG]', {
+  method: req.method,
+  path: req.originalUrl,
+  origin: req.headers.origin,
+  cookiePresent: Boolean(cookieToken),
+  headerPresent: Boolean(headerToken),
+  cookieLength: cookieToken?.length ?? 0,
+  headerLength: headerToken?.length ?? 0,
+  tokensMatch:
+    Boolean(cookieToken && headerToken) &&
+    cookieToken === headerToken,
+});
+
   if (!cookieToken || !headerToken || cookieToken.length !== headerToken.length) {
     const error = new Error('Invalid CSRF token. Refresh the page and try again.');
     error.statusCode = 403;
