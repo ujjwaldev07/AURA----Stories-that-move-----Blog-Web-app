@@ -6,8 +6,7 @@
  */
 
 const DEFAULT_ORIGINS = [
-  'http://localhost:5174',
-  'http://127.0.0.1:5174',
+  'https://aura-stories-that-move-blog-web-ars418ert-sweet-souls-projects.vercel.app'
 ];
 
 function getAllowedOrigins() {
