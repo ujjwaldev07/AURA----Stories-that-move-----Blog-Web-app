@@ -3,8 +3,8 @@ const { body } = require('express-validator');
 const User = require('../models/user');
 const { jwtAuth, generateJWT } = require('../jwt');
 const { validate } = require('../middleware/validate');
-const { setAuthCookie, clearAuthCookie } = require('../utils/cookies');
-const { verifyGoogleCredential } = require('../services/googleAuthService');
+const { setAuthCookie, clearAuthCookie } = require('../utils/cookies.js');
+const { verifyGoogleCredential } = require('../services/googleAuthService.js');
 
 const router = express.Router();
 

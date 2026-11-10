@@ -28,25 +28,48 @@ function generateJWT(user) {
  */
 function jwtAuth(req, res, next) {
   const header = req.headers.authorization;
-  const bearer = header?.startsWith('Bearer ') ? header.slice(7) : null;
-  const token = bearer || req.signedCookies?.token || req.cookies?.token;
+
+  const bearer = header?.startsWith('Bearer ')
+    ? header.slice(7)
+    : null;
+
+  const token =
+    bearer ||
+    req.signedCookies?.token ||
+    req.cookies?.token;
 
   if (!token) {
-    return res.status(401).json({ message: 'Unauthorized. Please sign in.' });
+    return res.status(401).json({
+      message: 'Unauthorized. Please sign in.',
+      code: 'UNAUTHORIZED',
+    });
   }
 
   try {
     const decoded = jwt.verify(token, getSecret());
+
+    if (!decoded.id) {
+      return res.status(401).json({
+        message: 'Invalid authentication payload.',
+        code: 'INVALID_TOKEN',
+      });
+    }
+
     req.user = decoded;
-    console.info('[auth] authenticated request', { userId: decoded.id, path: req.originalUrl });
+
     return next();
+
   } catch (err) {
     const expired = err.name === 'TokenExpiredError';
+
     return res.status(401).json({
       message: expired
         ? 'Session expired. Please sign in again.'
         : 'Unauthorized. Invalid token.',
-      code: expired ? 'TOKEN_EXPIRED' : 'TOKEN_INVALID',
+
+      code: expired
+        ? 'TOKEN_EXPIRED'
+        : 'TOKEN_INVALID',
     });
   }
 }

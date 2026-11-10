@@ -106,19 +106,16 @@ app.use('/api/auth', authLimiter);
 // cannot possess a CSRF token yet.
 app.use('/api', (req, res, next) => {
   const skipPaths = [
-    '/auth/register',
-    '/auth/login',
-    '/auth/google',
-    '/auth/csrf',
-    '/auth/refetch',
-    '/auth/logout',
     '/health',
   ];
-  if (skipPaths.includes(req.path)) return next();
+
+  if (skipPaths.includes(req.path)) {
+         return next();
+  }
+    
   return csrfProtection(req, res, next);
 });
 
-app.use('/api/auth', authRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
