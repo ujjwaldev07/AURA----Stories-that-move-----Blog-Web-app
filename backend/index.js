@@ -11,7 +11,7 @@ const cookieParser = require('cookie-parser');
 const connectDB = require('./config/connectDB');
 const { getCorsOptions } = require('./config/cors');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
-const { issueCsrfToken, csrfProtection } = require('./middleware/csrf');
+const { csrfProtection } = require('./middleware/csrf');
 
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -67,9 +67,6 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 // Cookie parser
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
-// CSRF token issuing middleware (sets csrf_token cookie on every request)
-app.use(issueCsrfToken);
-
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
@@ -101,18 +98,17 @@ const authLimiter = rateLimit({
 });
 app.use('/api/auth', authLimiter);
 
-// CSRF protection — skip auth routes that are CSRF-entry points
-// (register, login, google, csrf, refetch) since new/unauthenticated visitors
-// cannot possess a CSRF token yet.
+// Every unsafe API request is protected. Tokens are issued only by the safe
+// GET /api/auth/csrf route, so unrelated requests cannot replace them.
 app.use('/api', (req, res, next) => {
   const skipPaths = [
     '/health',
   ];
 
   if (skipPaths.includes(req.path)) {
-         return next();
+    return next();
   }
-    
+
   return csrfProtection(req, res, next);
 });
 

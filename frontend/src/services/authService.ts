@@ -1,4 +1,4 @@
-import api, { setCsrfToken } from '@/lib/axios'
+import api, { initializeCsrf } from '@/lib/axios'
 import { API_ENDPOINTS } from '@/config/api'
 import type { AuthUser, User } from '@/types'
 import { emailToUsername, getAvatarUrl } from '@/utils/format'
@@ -42,11 +42,7 @@ function mapAuthUser(user: Partial<User> & { email: string; _id?: string; id?: s
 
 export const authService = {
   async initializeCsrf() {
-    const { data } = await api.get<{ csrfToken?: string }>(API_ENDPOINTS.auth.csrf, {
-      skipAuthRefresh: true,
-    })
-    if (!data.csrfToken) throw { message: 'Unable to initialize secure session.', status: 500 }
-    setCsrfToken(data.csrfToken)
+    await initializeCsrf()
   },
 
   async register(payload: RegisterPayload) {

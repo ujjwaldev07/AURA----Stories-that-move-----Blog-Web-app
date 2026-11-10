@@ -5,6 +5,7 @@ const { jwtAuth, generateJWT } = require('../jwt');
 const { validate } = require('../middleware/validate');
 const { setAuthCookie, clearAuthCookie } = require('../utils/cookies.js');
 const { verifyGoogleCredential } = require('../services/googleAuthService.js');
+const { issueCsrfToken } = require('../middleware/csrf');
 
 const router = express.Router();
 
@@ -144,46 +145,19 @@ async function logoutHandler(_req, res) {
 
 router.post('/logout', logoutHandler);
 
-router.get('/csrf', (_req, res) => res.status(200).json({ csrfToken: res.locals.csrfToken }));
+// This is the sole CSRF-cookie entry point. Keeping issuance here prevents
+// concurrent bootstrap requests from replacing a token unexpectedly.
+router.get('/csrf', issueCsrfToken, (_req, res) => {
+  return res.status(200).json({ csrfToken: res.locals.csrfToken });
+});
 
 // GET /api/auth/refetch — restore session from cookie or Bearer token
-router.get('/refetch', async (req, res) => {
+router.get('/refetch', jwtAuth, async (req, res) => {
   try {
-    const header = req.headers.authorization;
-    const bearer = header?.startsWith('Bearer ') ? header.slice(7) : null;
-    const token = bearer || req.signedCookies?.token || req.cookies?.token;
-
-    if (!token) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    const jwt = require('jsonwebtoken');
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (err) {
-      const expired = err.name === 'TokenExpiredError';
-      return res.status(401).json({
-        message: expired
-          ? 'Session expired. Please sign in again.'
-          : 'Unauthorized. Invalid token.',
-        code: expired ? 'TOKEN_EXPIRED' : 'TOKEN_INVALID',
-      });
-    }
-
-    const userId = decoded.id || decoded.userData?.id;
-    const email = decoded.email || decoded.userData?.email;
-
-    let user = null;
-    if (userId) {
-      user = await User.findById(userId);
-    }
-    if (!user && email) {
-      user = await User.findOne({ email: String(email).toLowerCase() });
-    }
+    const user = await User.findById(req.user.id);
 
     if (!user) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      return res.status(401).json({ message: 'Unauthorized. Please sign in.' });
     }
 
     return res.status(200).json({

@@ -33,10 +33,12 @@ function jwtAuth(req, res, next) {
     ? header.slice(7)
     : null;
 
-  const token =
-    bearer ||
-    req.signedCookies?.token ||
-    req.cookies?.token;
+  // Auth cookies are signed whenever COOKIE_SECRET is configured. Do not fall
+  // back to an unsigned value in that configuration.
+  const cookieToken = process.env.COOKIE_SECRET
+    ? req.signedCookies?.token
+    : req.cookies?.token;
+  const token = bearer || cookieToken;
 
   if (!token) {
     return res.status(401).json({

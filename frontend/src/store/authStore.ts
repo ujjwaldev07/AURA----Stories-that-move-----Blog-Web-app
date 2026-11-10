@@ -3,6 +3,8 @@ import { persist } from 'zustand/middleware'
 import type { AuthUser } from '@/types'
 import { authService } from '@/services/authService'
 
+let bootstrapPromise: Promise<void> | null = null
+
 interface AuthState {
   user: AuthUser | null
   isAuthenticated: boolean
@@ -37,19 +39,29 @@ export const useAuthStore = create<AuthState>()(
       setLoading: (v) => set({ isLoading: v }),
 
       bootstrap: async () => {
+        if (bootstrapPromise) return bootstrapPromise
+
         set({ isLoading: true })
-        try {
-          await authService.initializeCsrf()
-          const user = await authService.refetch()
-          set({ user, isAuthenticated: true, isLoading: false, isHydrated: true })
-        } catch {
-          set({
-            user: null,
-            isAuthenticated: false,
-            isLoading: false,
-            isHydrated: true,
-          })
-        }
+        bootstrapPromise = (async () => {
+          try {
+            await authService.initializeCsrf()
+            const user = await authService.refetch()
+            set({ user, isAuthenticated: true, isLoading: false, isHydrated: true })
+          } catch {
+            // A 401 here is expected for a new visitor; route guards wait for
+            // bootstrap rather than treating it as an application error.
+            set({
+              user: null,
+              isAuthenticated: false,
+              isLoading: false,
+              isHydrated: true,
+            })
+          } finally {
+            bootstrapPromise = null
+          }
+        })()
+
+        return bootstrapPromise
       },
 
       logout: async () => {

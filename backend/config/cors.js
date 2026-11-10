@@ -9,13 +9,25 @@ const DEFAULT_ORIGINS = [
   'https://aura-stories-that-move-blog-web-ars418ert-sweet-souls-projects.vercel.app'
 ];
 
+function normalizeOrigin(value) {
+  try {
+    const url = new URL(value);
+    return ['http:', 'https:'].includes(url.protocol) ? url.origin : null;
+  } catch {
+    return null;
+  }
+}
+
 function getAllowedOrigins() {
-  const fromEnv = (process.env.CLIENT_ORIGINS || process.env.CLIENT_URL || '')
+  const fromEnv = [process.env.CLIENT_ORIGINS, process.env.CLIENT_URL]
+    .filter(Boolean)
+    .join(',')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
 
-  return [...new Set([...DEFAULT_ORIGINS, ...fromEnv])];
+  const developmentOrigins = process.env.NODE_ENV === 'production' ? [] : DEFAULT_ORIGINS;
+  return [...new Set([...developmentOrigins, ...fromEnv.map(normalizeOrigin).filter(Boolean)])];
 }
 
 function getCorsOptions() {
@@ -49,4 +61,4 @@ function getCorsOptions() {
   };
 }
 
-module.exports = { getCorsOptions, getAllowedOrigins };
+module.exports = { getCorsOptions, getAllowedOrigins, normalizeOrigin };

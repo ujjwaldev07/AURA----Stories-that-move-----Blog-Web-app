@@ -309,7 +309,6 @@ CLIENT_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
 COOKIE_SECRET=strong_random_string
 SESSION_SECRET=strong_random_string
 GOOGLE_CLIENT_ID=your-client-id
-GOOGLE_CLIENT_SECRET=your-client-secret
 ```
 
 ### Required Environment Variables (Frontend)

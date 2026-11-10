@@ -10,6 +10,8 @@ declare module 'axios' {
   export interface AxiosRequestConfig {
     /** Skip global 401 session clearing (login/register/refetch) */
     skipAuthRefresh?: boolean
+    /** Internal guard: retry a request at most once after refreshing CSRF. */
+    _csrfRetried?: boolean
   }
 }
 
@@ -24,26 +26,40 @@ export const api = axios.create({
 })
 
 let csrfToken: string | null = null
+let csrfInitialization: Promise<string> | null = null
 
-function getCookie(name: string) {
-  const encoded = `${encodeURIComponent(name)}=`
-  return document.cookie.split('; ').find((entry) => entry.startsWith(encoded))?.slice(encoded.length)
+/**
+ * Establish the double-submit CSRF pair once for every set of callers. The
+ * token is kept from the API response because a Vercel SPA cannot read a
+ * host-only cookie owned by a Render API domain.
+ */
+export async function initializeCsrf(force = false): Promise<string> {
+  if (!force && csrfToken) return csrfToken
+  if (csrfInitialization) return csrfInitialization
+
+  csrfInitialization = api
+    .get<{ csrfToken?: string }>('/api/auth/csrf', { skipAuthRefresh: true })
+    .then(({ data }) => {
+      if (!data.csrfToken) throw new Error('Unable to initialize secure session.')
+      csrfToken = data.csrfToken
+      return csrfToken
+    })
+    .finally(() => {
+      csrfInitialization = null
+    })
+
+  return csrfInitialization
 }
 
-/** Called after GET /api/auth/csrf. Keeps CSRF usable across production subdomains. */
-export function setCsrfToken(token: string) {
-  csrfToken = token
-}
-
-api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   // Let the browser set multipart boundary
   if (config.data instanceof FormData) {
     delete config.headers['Content-Type']
   }
 
   if (!['get', 'head', 'options'].includes(config.method?.toLowerCase() || 'get')) {
-    const token = csrfToken || getCookie('csrf_token')
-    if (token) config.headers.set('x-csrf-token', decodeURIComponent(token))
+    const token = csrfToken || await initializeCsrf()
+    config.headers.set('x-csrf-token', token)
   }
 
   return config
@@ -51,7 +67,19 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<{ message?: string; error?: string; code?: string }>) => {
+  async (error: AxiosError<{ message?: string; error?: string; code?: string }>) => {
+    const request = error.config
+    const isCsrfFailure = error.response?.status === 403 &&
+      error.response.data?.message === 'Invalid CSRF token. Refresh the page and try again.'
+
+    // A CSRF rejection occurs before the route handler, so one replay is safe.
+    // It repairs an expired cookie after a long-lived SPA tab.
+    if (request && isCsrfFailure && !request._csrfRetried) {
+      request._csrfRetried = true
+      await initializeCsrf(true)
+      return api.request(request)
+    }
+
     const mapped = mapApiError(error)
     const status = mapped.status
     const url = error.config?.url || ''
